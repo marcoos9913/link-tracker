@@ -19,4 +19,10 @@ export class Link {
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
+
+  @Column({ nullable: true }) // Permitir que el campo sea nulo si no se especifica la contraseña
+  password: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  expirationDate: Date;
 }

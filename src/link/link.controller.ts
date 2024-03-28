@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, Param, Redirect, NotFoundException, Put} from '@nestjs/common';
+import { Body, Controller, Post, Get, Param, Redirect, NotFoundException, Put, Query} from '@nestjs/common';
 import { LinkService } from './link.service';
 
 @Controller('links')
@@ -6,16 +6,16 @@ export class LinkController {
   constructor(private readonly linkService: LinkService) {}
 
   @Post()
-  async createLink(@Body() body: { url: string }) {
-    const { url } = body;
-    const maskedLink = await this.linkService.createLink(url);
+  async createLink(@Body() body: { url: string, password?: string, expirationDate?: Date }) { //El signo de pregunta indica que el parametro es opcional
+    const { url,password,expirationDate } = body; //Esto es lo que ingresa en el body
+    const maskedLink = await this.linkService.createLink(url, password, expirationDate);//Ya se entiende que estas variables son del objeto body
     return { maskedLink };
   }
 
   @Get(':maskKey')
   @Redirect('', 302)
-  async redirectToOriginalUrl(@Param('maskKey') maskKey: string) {
-    const originalUrl = await this.linkService.getOriginalUrlByMaskKey(maskKey);
+  async redirectToOriginalUrl(@Param('maskKey') maskKey: string,@Query('password') password: string) {
+    const originalUrl = await this.linkService.getOriginalUrlByMaskKey(maskKey,password);
     if (!originalUrl) {
       throw new NotFoundException(); // Si no se encuentra el enlace, lanzar una excepción NotFoundException
     }

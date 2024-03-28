@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException  } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { And, Repository } from 'typeorm';
 import { Link } from './link.entity';
 
 @Injectable()
@@ -10,7 +10,7 @@ export class LinkService {
     private readonly linkRepository: Repository<Link>,
   ) {}
 
-  async createLink(originalUrl: string): Promise<string> {
+  async createLink(originalUrl: string, password: string, expirationDate: Date): Promise<string> {
     // Generar una clave aleatoria para el enlace enmascarado
     const maskKey = this.generateMaskKey();
 
@@ -18,7 +18,7 @@ export class LinkService {
     const maskedLink = `http://localhost:3000/links/${maskKey}`;
 
     // Guardar el enlace en la base de datos
-    await this.linkRepository.save({ originalUrl, maskedLink, maskKey });
+    await this.linkRepository.save({ originalUrl, maskedLink, maskKey, password, expirationDate });
 
     return maskedLink;
   }
@@ -35,10 +35,14 @@ export class LinkService {
     return maskKey;
   }
 
-  async getOriginalUrlByMaskKey(maskKey: string): Promise<string | null> {
-    const link = await this.linkRepository.findOne({ where: { maskKey } });
+  async getOriginalUrlByMaskKey(maskKey: string, password: string): Promise<string | null> {
+    const link = await this.linkRepository.findOne({ where: { maskKey, password} });
     if (!link) {
       throw new NotFoundException('Link not found');
+    }
+
+    if (link.expirationDate && new Date(link.expirationDate) < new Date()) {
+      throw new NotFoundException('Link expired');
     }
 
     // Incrementar el contador de redirecciones y guardar en la base de datos
