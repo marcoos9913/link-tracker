@@ -45,6 +45,11 @@ export class LinkService {
       throw new NotFoundException('Link expired');
     }
 
+    console.log(password)
+    if (link.password != password){
+      throw new NotFoundException('Password Invalid');
+    }
+
     // Incrementar el contador de redirecciones y guardar en la base de datos
     link.redirectCount += 1;
     await this.linkRepository.save(link);
